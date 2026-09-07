@@ -43,7 +43,6 @@ export default async function handler(
     if (!clientSecret) {
       throw new Error("GOOGLE_CLIENT_SECRET não configurado.");
     }
-
     if (!refreshToken) {
       throw new Error("GOOGLE_REFRESH_TOKEN não configurado.");
     }

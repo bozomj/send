@@ -1,8 +1,8 @@
-import { google } from "googleapis";
 import formidable from "formidable";
 import fs from "fs";
 import path from "path";
 import { NextApiRequest, NextApiResponse } from "next";
+import { uploadFile } from "@/storage/cloudflare/r2Cliente";
 
 // Desativa o body parser padrão do Next.js
 // para permitir upload via multipart/form-data.
@@ -63,31 +63,6 @@ export default async function handler(
 
   try {
     // ==========================================
-    // 2. VARIÁVEIS DE AMBIENTE
-    // ==========================================
-
-    const clientId = process.env.GOOGLE_CLIENT_ID;
-    const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-    const refreshToken = process.env.GOOGLE_REFRESH_TOKEN;
-    const folderId = process.env.ID_PASTA_COMPARTILHADA;
-
-    if (!clientId) {
-      throw new Error("GOOGLE_CLIENT_ID não configurado.");
-    }
-
-    if (!clientSecret) {
-      throw new Error("GOOGLE_CLIENT_SECRET não configurado.");
-    }
-
-    if (!refreshToken) {
-      throw new Error("GOOGLE_REFRESH_TOKEN não configurado.");
-    }
-
-    if (!folderId) {
-      throw new Error("ID_PASTA_COMPARTILHADA não configurado.");
-    }
-
-    // ==========================================
     // 3. LÊ O ARQUIVO
     // ==========================================
 
@@ -145,83 +120,24 @@ export default async function handler(
     }
 
     // ==========================================
-    // 7. AUTENTICAÇÃO GOOGLE
-    // ==========================================
-
-    const oauth2Client = new google.auth.OAuth2(
-      clientId,
-      clientSecret,
-      process.env.GOOGLE_REDIRECT_URI,
-    );
-
-    oauth2Client.setCredentials({
-      refresh_token: refreshToken,
-    });
-
-    // ==========================================
-    // 8. CLIENTE GOOGLE DRIVE
-    // ==========================================
-
-    const drive = google.drive({
-      version: "v3",
-      auth: oauth2Client,
-    });
-
-    // ==========================================
     // 9. METADADOS
     // ==========================================
 
     const fileMetadata = {
       name: originalFilename || "arquivo_upload",
-      parents: [folderId],
     };
 
     // ==========================================
     // 10. CONTEÚDO
     // ==========================================
+    const ext = file.mimetype.split("/")[1];
 
-    const media = {
-      mimeType: expectedMimeType,
-      body: fs.createReadStream(file.filepath),
-    };
+    const filenameWithExt = `${file.newFilename}.${ext}`;
 
-    // ==========================================
-    // 11. UPLOAD
-    // ==========================================
+    const newName = renomearArquivo(file.originalFilename || "");
+    console.log(ext, newName);
 
-    const driveFile = await drive.files.create({
-      requestBody: fileMetadata,
-      media,
-      fields: "id,name,mimeType,size",
-    });
-
-    const fileId = driveFile.data.id;
-
-    if (!fileId) {
-      throw new Error("Google Drive não retornou o ID do arquivo.");
-    }
-
-    // ==========================================
-    // 12. TORNA O ARQUIVO ACESSÍVEL
-    // ==========================================
-
-    await drive.permissions.create({
-      fileId,
-      requestBody: {
-        role: "reader",
-        type: "anyone",
-      },
-    });
-
-    // ==========================================
-    // 13. LINK DO SEU SISTEMA
-    // ==========================================
-
-    // Por enquanto usamos o fileId.
-    // Depois podemos trocar por um token aleatório
-    // salvo no banco.
-
-    const downloadLink = `${process.env.NEXT_PUBLIC_APP_URL}/api/v1/download/${fileId}`;
+    await uploadFile(file.filepath, newName, file.mimetype);
 
     // ==========================================
     // 14. LIMPA O ARQUIVO TEMPORÁRIO
@@ -237,14 +153,9 @@ export default async function handler(
     // 15. RESPOSTA
     // ==========================================
 
-    const publicLink = `https://drive.google.com/file/d/${fileId}/view?usp=sharing`;
-
     return res.status(200).json({
       success: true,
-      fileId,
-      fileName: driveFile.data.name,
-      mimeType: driveFile.data.mimeType,
-      link: publicLink,
+      file: file,
     });
   } catch (error) {
     console.error("Erro detalhado no upload:", error);
@@ -263,4 +174,29 @@ export default async function handler(
       error: "Falha interna ao processar o upload.",
     });
   }
+}
+
+function renomearArquivo(nomeOriginal: string) {
+  // 1. Gera o ID de 5 dígitos (3 do tempo atual + 2 aleatórios)
+  const tempo = Date.now().toString(36).slice(-3);
+  const random = Math.random().toString(36).substring(2, 4);
+  const idCurto = `${tempo}${random}`;
+
+  // 2. Separa o nome da extensão
+  const partes = nomeOriginal.split(".");
+  const extensao = partes.pop(); // Pega a extensão (ex: png, jpg)
+
+  // Rejunta o resto caso o arquivo tenha múltiplos pontos (ex: foto.v2.png)
+  let nomeSemExtensao = partes.join(".");
+
+  // 3. Limpa o nome (troca espaços por traços e remove caracteres especiais)
+  nomeSemExtensao = nomeSemExtensao
+    .normalize("NFD") // Remove acentos
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9-_]/g, "-") // Deixa apenas letras, números, - e _
+    .replace(/-+/g, "-"); // Evita traços duplicados
+
+  // 4. Retorna no formato exato: id.nome.extensao
+  return `${idCurto}.${nomeSemExtensao}.${extensao}`;
 }

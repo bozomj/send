@@ -1,6 +1,7 @@
 import { faPlus } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { ChangeEvent, FormEvent, useState } from "react";
+import { useRouter } from "next/router";
+import { ChangeEvent, SubmitEvent, useState } from "react";
 
 const Home = () => {
   // Estados para gerenciar o arquivo, carregamento e o link de retorno
@@ -8,8 +9,10 @@ const Home = () => {
   const [loading, setLoading] = useState(false);
   const [shareLink, setShareLink] = useState("");
 
+  const router = useRouter();
+
   // Função disparada ao clicar em "Compartilhar"
-  const handleSubmit = async (e: FormEvent) => {
+  const handleSubmit = async (e: SubmitEvent) => {
     e.preventDefault();
     if (!selectedFile) {
       alert("Por favor, selecione um arquivo primeiro.");
@@ -32,7 +35,9 @@ const Home = () => {
       const data = await response.json();
 
       if (data.success) {
+        console.log(data.file);
         setShareLink(data.fileId);
+        // router.push(`/file/${data.fileId}?title=${data.fileName}`);
       } else {
         alert(data.error || "Erro ao fazer upload do arquivo.");
       }
@@ -80,12 +85,12 @@ const Home = () => {
         <div className="mt-4 p-4 bg-emerald-100 text-emerald-800 rounded-md max-w-sm w-full text-center">
           <p className="font-bold mb-1">✓ Arquivo Compartilhado!</p>
           <a
-            href={`/api/v1/download/${shareLink}`}
+            href={`/file/${shareLink}`}
             target="_blank"
             rel="noopener noreferrer"
             className="text-sky-700 underline break-all font-medium text-sm block"
           >
-            {`${process.env.NEXT_PUBLIC_SERVER}/api/v1/download/${shareLink}`}
+            {`${process.env.NEXT_PUBLIC_SERVER}/file/${shareLink}`}
           </a>
         </div>
       )}
@@ -105,6 +110,10 @@ async function getFile(
   }
 
   const file = files[0];
+
+  const MAX_FILE_SIZE = 50 * 1024 * 1024;
+
+  if (file.size > MAX_FILE_SIZE) return;
 
   const allowedExtensions =
     /(\.pdf|\.doc|\.docx|\.xls|\.xlsx|\.ppt|\.pptx|\.txt|\.odt|\.zip|\.rar|\.7z|\.tar|\.gz)$/i;
