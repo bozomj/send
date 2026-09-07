@@ -40,8 +40,6 @@ const Home = () => {
       const data = await response.json();
 
       if (data.success) {
-        console.log(data);
-
         const r2Response = await fetch(data.url, {
           method: "PUT", // O R2 exige obrigatoriamente o método PUT
           body: selectedFile, // Aqui enviamos o arquivo original COMPLETO
@@ -50,8 +48,12 @@ const Home = () => {
           },
         });
 
-        // setShareLink(data.fileId);
-        // router.push(`/file/${data.file.newFilename}`);
+        setTimeout(() => {
+          router.push(`/file/${data.key}`).catch(() => {
+            // Se ainda assim o Next.js falhar, o navegador força o redirecionamento nativo
+            window.location.href = `/file/${data.key}`;
+          });
+        }, 300);
       } else {
         console.log("error:", data);
         alert(data.error || "Erro ao fazer upload do arquivo.");
