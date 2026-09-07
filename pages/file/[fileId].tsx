@@ -28,7 +28,7 @@ const File = () => {
       <div className="w-md flex flex-col gap-4 items-center p-2 ">
         <h1 className="text-2xl font-bold">Arquivo disponível</h1>
 
-        <QRCodeSVG value={url} className="w-7/10 h-7/10" />
+        <QRCodeSVG value={fileUrl} className="w-7/10 h-7/10" />
 
         <p className="text-center">Escaneie o QR Code para baixar o arquivo.</p>
 
