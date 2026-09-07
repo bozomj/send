@@ -4,7 +4,7 @@ import {
   DeleteObjectCommand,
   S3Client,
 } from "@aws-sdk/client-s3";
-
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import fs from "fs";
 
 export const r2Client = new S3Client({
@@ -19,15 +19,16 @@ export const r2Client = new S3Client({
 export async function uploadFile(filePath: string, key: string, type: string) {
   const fileStream = fs.createReadStream(filePath);
 
-  await r2Client.send(
-    new PutObjectCommand({
-      Bucket: process.env.CLOUDFLARE_R2_BUCKET,
-      Key: key,
-      Body: fileStream,
-      ContentType: type,
-      CacheControl: "public, max-age=2592000, s-maxage=2592000",
-    }),
-  );
+  const command = new PutObjectCommand({
+    Bucket: process.env.CLOUDFLARE_R2_BUCKET,
+    Key: key,
+    ContentType: type,
+    CacheControl: "public, max-age=2592000, s-maxage=2592000",
+  });
+
+  const uploadUrl = await getSignedUrl(r2Client, command, { expiresIn: 60 });
+
+  return uploadUrl;
 }
 
 export async function deleteFile(key: string) {
@@ -54,6 +55,20 @@ export async function deleteFile(key: string) {
       cause: err,
     };
   }
+}
+
+export async function downloadFile(key: string) {
+  const result = await getSignedUrl(
+    r2Client,
+    new GetObjectCommand({
+      Bucket: process.env.CLOUDFLARE_R2_BUCKET!,
+      Key: key,
+      ResponseContentDisposition: `attachment; filename="${key}"`,
+    }),
+    { expiresIn: 60 },
+  );
+
+  return result;
 }
 
 export async function getFileStream(key: string) {

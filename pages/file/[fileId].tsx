@@ -1,3 +1,4 @@
+import { downloadFile } from "@/storage/cloudflare/r2Cliente";
 import { useParams } from "next/navigation";
 import { QRCodeSVG } from "qrcode.react";
 
@@ -11,9 +12,10 @@ const File = () => {
 
   const url = `${process.env.NEXT_PUBLIC_SERVER}/api/v1/download/${file_id}`;
 
-  const shareWhatsApp = () => {
+  const shareWhatsApp = async () => {
     const urli = `https://api.whatsapp.com/send?text=${encodeURIComponent(url)}`;
-    window.open(urli, "_blank");
+    console.log(urli);
+    // window.open(urli, "_blank");
   };
 
   const copyUrl = async () => {

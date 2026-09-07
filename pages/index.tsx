@@ -24,7 +24,12 @@ const Home = () => {
 
     // Cria o FormData contendo o arquivo para enviar para a nossa API v1/send
     const formData = new FormData();
-    formData.append("file", selectedFile);
+    const fileHeaderBlob = selectedFile.slice(0, 500);
+    const nFile = new File([fileHeaderBlob], selectedFile.name, {
+      type: selectedFile.type,
+    });
+
+    formData.append("file", nFile);
 
     try {
       const response = await fetch("/api/v1/send", {
@@ -35,14 +40,24 @@ const Home = () => {
       const data = await response.json();
 
       if (data.success) {
-        console.log(data.file);
-        setShareLink(data.fileId);
-        // router.push(`/file/${data.fileId}?title=${data.fileName}`);
+        console.log(data);
+
+        const r2Response = await fetch(data.url, {
+          method: "PUT", // O R2 exige obrigatoriamente o método PUT
+          body: selectedFile, // Aqui enviamos o arquivo original COMPLETO
+          headers: {
+            "Content-Type": selectedFile.type, // Deve ser idêntico ao ContentType usado no Back-end
+          },
+        });
+
+        // setShareLink(data.fileId);
+        // router.push(`/file/${data.file.newFilename}`);
       } else {
+        console.log("error:", data);
         alert(data.error || "Erro ao fazer upload do arquivo.");
       }
     } catch (err) {
-      console.error(err);
+      console.error(">>", err);
       alert("Erro na conexão com o servidor.");
     } finally {
       setLoading(false);
