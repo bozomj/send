@@ -1,5 +1,4 @@
 import { ReactElement } from "react";
-import { HeadLayout } from "./HeadLayout";
 
 interface MainLayoutProps {
   children: ReactElement;
