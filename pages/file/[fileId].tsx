@@ -11,15 +11,16 @@ const File = () => {
   const file_id = params?.fileId ?? "";
 
   const url = `${process.env.NEXT_PUBLIC_SERVER}/api/v1/download/${file_id}`;
+  const fileUrl = `${process.env.NEXT_PUBLIC_SERVER}/file/${file_id}`;
 
   const shareWhatsApp = async () => {
-    const urli = `https://api.whatsapp.com/send?text=${encodeURIComponent(url)}`;
+    const urli = `https://wa.me/?text=${encodeURIComponent(fileUrl)}`;
     console.log(urli);
-    // window.open(urli, "_blank");
+    window.open(urli, "_blank");
   };
 
   const copyUrl = async () => {
-    await navigator.clipboard.writeText(url);
+    await navigator.clipboard.writeText(fileUrl);
   };
 
   return (

@@ -97,7 +97,6 @@ const Home = () => {
         </button>
       </form>
 
-      {/* Exibe o link retornado pelo Google Drive */}
       {shareLink && (
         <div className="mt-4 p-4 bg-emerald-100 text-emerald-800 rounded-md max-w-sm w-full text-center">
           <p className="font-bold mb-1">✓ Arquivo Compartilhado!</p>
