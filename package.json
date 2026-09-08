@@ -6,7 +6,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "migrate:create": "node-pg-migrate --migrations-dir infra/migrations create",
+    "migrations:up": "node-pg-migrate  --migrations-dir infra/migrations --envPath .env.development up",
+    "migrate:down": "node-pg-migrate down",
+    "migrations:up:dry": "node-pg-migrate  --migrations-dir infra/migrations --envPath .env.development --dry-run up"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.940.0",

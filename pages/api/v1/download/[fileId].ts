@@ -22,9 +22,9 @@ export default async function handler(
 
     const { fileId } = req.query;
 
-    console.log("\n\n\n", fileId, "\n\n\n");
-
     const fileUrl = Array.isArray(fileId) ? fileId[0] : fileId;
+
+    return res.status(403).json({ message: "Em manutenção" });
 
     if (fileUrl) {
       const download = await downloadFile(fileUrl);
