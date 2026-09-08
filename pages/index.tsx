@@ -22,7 +22,6 @@ const Home = () => {
     setLoading(true);
     setShareLink("");
 
-    // Cria o FormData contendo o arquivo para enviar para a nossa API v1/send
     const formData = new FormData();
     const fileHeaderBlob = selectedFile.slice(0, 500);
     const nFile = new File([fileHeaderBlob], selectedFile.name, {
@@ -55,11 +54,9 @@ const Home = () => {
           });
         }, 300);
       } else {
-        console.log("error:", data);
         alert(data.error || "Erro ao fazer upload do arquivo.");
       }
     } catch (err) {
-      console.error(">>", err);
       alert("Erro na conexão com o servidor.");
     } finally {
       setLoading(false);
@@ -96,20 +93,6 @@ const Home = () => {
           {loading ? "Compartilhando..." : "Compartilhar"}
         </button>
       </form>
-
-      {shareLink && (
-        <div className="mt-4 p-4 bg-emerald-100 text-emerald-800 rounded-md max-w-sm w-full text-center">
-          <p className="font-bold mb-1">✓ Arquivo Compartilhado!</p>
-          <a
-            href={`/file/${shareLink}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sky-700 underline break-all font-medium text-sm block"
-          >
-            {`${process.env.NEXT_PUBLIC_SERVER}/file/${shareLink}`}
-          </a>
-        </div>
-      )}
     </div>
   );
 };
