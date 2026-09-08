@@ -53,6 +53,13 @@ export default async function handler(
     // O React envia o mini-blob pelo campo 'chunk'
     const fileArray = files.chunk || files.file;
     const file = Array.isArray(fileArray) ? fileArray[0] : fileArray;
+    const fileSize = Number(fields.fileSize);
+
+    if (fileSize > 50) {
+      throw {
+        message: "Arquivo Maior do que o Permitido",
+      };
+    }
 
     // Captura o nome original enviado pelo FormData text fields
     const originalFilename = Array.isArray(fields.filename)
@@ -76,12 +83,6 @@ export default async function handler(
     // 2. LEITURA E VALIDAÇÃO DOS BYTES REAIS (A Armadilha)
     const buffer = fs.readFileSync(file.filepath);
     const realType = await FileType.fromBuffer(buffer);
-
-    // LOGS DE DEPURAÇÃO: Olhe o terminal do seu VS Code / Next.js ao tentar subir!
-    console.log("--- SCANNER DE BYTES ---");
-    console.log("Nome nominal enviado:", originalFilename);
-    console.log("Extensão declarada:", extension);
-    console.log("Resultado real detectado pelos bytes:", realType);
 
     let isFileValid = false;
     const officeExtensions = [".xlsx", ".docx", ".pptx"];
@@ -128,11 +129,11 @@ export default async function handler(
     return res
       .status(200)
       .json({ success: true, url: uploadUrl, key: newName });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Erro detalhado no upload:", error);
-    return res
-      .status(500)
-      .json({ error: "Falha interna ao processar o upload." });
+    return res.status(500).json({
+      error: "Falha interna ao processar o upload.\n" + error.message,
+    });
   }
 }
 

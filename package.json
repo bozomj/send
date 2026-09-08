@@ -18,9 +18,11 @@
     "file-type": "^16.5.4",
     "formidable": "^3.5.4",
     "next": "16.3.4",
+    "node-pg-migrate": "^9.0.0",
     "qrcode.react": "^4.2.0",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "pg": "8.20.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.3",

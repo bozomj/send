@@ -29,6 +29,7 @@ const Home = () => {
     });
 
     formData.append("file", nFile);
+    formData.append("fileSize", selectedFile.size.toString());
 
     try {
       const response = await fetch("/api/v1/send", {
