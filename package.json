@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "migrate:create": "node-pg-migrate --migrations-dir infra/migrations create",
-    "migrations:up": "node-pg-migrate  --migrations-dir infra/migrations --envPath .env.development up",
+    "migrate:up": "node-pg-migrate  --migrations-dir infra/migrations --envPath .env.development up",
     "migrate:down": "node-pg-migrate down",
     "migrations:up:dry": "node-pg-migrate  --migrations-dir infra/migrations --envPath .env.development --dry-run up"
   },
@@ -22,22 +22,26 @@
     "file-type": "^16.5.4",
     "formidable": "^3.5.4",
     "next": "16.3.4",
+    "next-connect": "^1.0.0",
     "node-pg-migrate": "^9.0.0",
+    "pg": "8.20.0",
     "qrcode.react": "^4.2.0",
     "react": "19.2.8",
-    "react-dom": "19.2.8",
-    "pg": "8.20.0"
+    "react-dom": "19.2.8"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.3",
     "@types/formidable": "^3.5.1",
     "@types/node": "^20",
+    "@types/pg": "^8.23.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "autoprefixer": "^10.5.4",
     "eslint": "^9",
     "eslint-config-next": "16.3.4",
     "postcss": "^8.5.28",
-    "typescript": "^5"
+    "typescript": "^5",
+    "dotenv": "^16.6.1",
+    "dotenv-cli": "^11.0.0"
   }
 }
