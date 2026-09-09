@@ -8,10 +8,12 @@ interface FileProps {
 
 const File = () => {
   const params = useParams();
-  const file_id = params?.fileId ?? "";
+  const file_id = (params?.fileId as string) ?? "";
 
   const url = `${process.env.NEXT_PUBLIC_SERVER}/api/v1/download/${file_id}`;
   const fileUrl = `${process.env.NEXT_PUBLIC_SERVER}/file/${file_id}`;
+  const name = file_id.replace(".", "--.--");
+  const filename = name.split("--.--")[1];
 
   const shareWhatsApp = async () => {
     const urli = `https://wa.me/?text=${encodeURIComponent(fileUrl)}`;
@@ -50,9 +52,10 @@ const File = () => {
             </div>
             <a
               href={url}
-              className="rounded text-center bg-sky-800 font-bold px-5 w-full py-2 text-white"
+              className="rounded text-center bg-sky-800 font-bold px-5 w-full py-2 text-white flex flex-col"
             >
-              Baixar arquivo
+              <span>{filename}</span>
+              <span className="text-amber-400">Baixar arquivo</span>
             </a>
           </div>
         </div>
