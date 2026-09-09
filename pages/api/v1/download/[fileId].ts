@@ -1,35 +1,40 @@
 import { downloadFile, getFileStream } from "@/storage/cloudflare/r2Cliente";
-import rateLimit from "express-rate-limit";
 import { NextApiRequest, NextApiResponse } from "next";
 import { createRouter } from "next-connect";
 
-//midleware para barrar multiplas requisiçoes
-export const downloadLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // Janela de 15 minutos
-  max: 5, // Cada IP só pode pedir 5 URLs assinadas a cada 15 minutos
-  standardHeaders: true,
-  legacyHeaders: false,
-  keyGenerator: (req) => {
-    // A Vercel sempre envia o IP real do cliente no topo do x-forwarded-for
-    const forwardedFor = req.headers["x-forwarded-for"];
-    if (forwardedFor) {
-      // Pega o primeiro IP da lista (que é o do usuário real)
-      return forwardedFor.split(",")[0].trim();
-    }
+import { Ratelimit } from "@upstash/ratelimit";
+import { Redis } from "@upstash/redis";
 
-    // Alternativas de segurança para Cloudflare ou Localhost
-    return (
-      req.headers["cf-connecting-ip"] ||
-      req.headers["x-vercel-forwarded-for"] ||
-      req.socket.remoteAddress
-    );
-  },
-  handler: (req, res) => {
+const redis = new Redis({
+  url: process.env.REDIS_URL,
+  token: process.env.REDIS_TOKEN,
+});
+
+const ratelimit = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(5, "15 m"),
+});
+
+// middleware para barrar múltiplas requisições
+export async function downloadLimiter(req: any, res: any, next: any) {
+  const forwardedFor = req.headers["x-forwarded-for"];
+
+  const ip =
+    req.headers["cf-connecting-ip"] ||
+    (forwardedFor
+      ? forwardedFor.split(",")[0].trim()
+      : req.socket.remoteAddress || "unknown");
+
+  const { success } = await ratelimit.limit(`upload:${ip}`);
+
+  if (!success) {
     return res.status(429).json({
       error: "Muitos Downloads requisitados. Tente novamente mais tarde.",
     });
-  },
-});
+  }
+
+  return next();
+}
 
 const router = createRouter<NextApiRequest, NextApiResponse>();
 router.get(downloadLimiter, getHandler);
