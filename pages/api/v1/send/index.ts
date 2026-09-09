@@ -3,6 +3,26 @@ import fs from "fs";
 import path from "path";
 import { NextApiRequest, NextApiResponse } from "next";
 import { uploadFile } from "@/storage/cloudflare/r2Cliente";
+import { createRouter } from "next-connect";
+import rateLimit from "express-rate-limit";
+
+//midleware para barrar multiplas requisiçoes
+export const uploadLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // Janela de 15 minutos
+  max: 5, // Cada IP só pode pedir 5 URLs assinadas a cada 15 minutos
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
+    return res.status(429).json({
+      error: "Muitos uploads requisitados. Tente novamente mais tarde.",
+    });
+  },
+});
+
+const router = createRouter<NextApiRequest, NextApiResponse>();
+router.post(uploadLimiter, postHandler);
+
+export default router.handler();
 
 // 🔥 IMPORTANTE: Usamos require para a versão 16.5.4 funcionar perfeitamente no CommonJS/Next.js
 const FileType = require("file-type");
@@ -34,10 +54,7 @@ const ALLOWED_FILES: Record<string, string> = {
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MB
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse,
-) {
+async function postHandler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Método não permitido. Use POST." });
   }
@@ -55,7 +72,7 @@ export default async function handler(
     const file = Array.isArray(fileArray) ? fileArray[0] : fileArray;
     const fileSize = Number(fields.fileSize);
 
-    if (fileSize > 50) {
+    if (fileSize > MAX_FILE_SIZE) {
       throw {
         message: "Arquivo Maior do que o Permitido",
       };
@@ -115,6 +132,20 @@ export default async function handler(
     // 3. FLUXO DE SUCESSO (Gerar URL do R2)
     const expectedMimeType = ALLOWED_FILES[extension];
     const newName = renomearArquivo(originalFilename);
+
+    //ccorte de manutencao------------------------------
+    // const userAgent = req.headers["user-agent"] || null;
+    // const ipAdress = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+
+    // return res.status(403).json({
+    //   success: true,
+    //   file: file.filepath,
+    //   name: newName,
+    //   type: expectedMimeType,
+    //   ip_adress: ipAdress,
+    //   user_agent: userAgent,
+    // });
+    //ccorte de manutencao------------------------------
 
     const uploadUrl = await uploadFile(
       file.filepath,

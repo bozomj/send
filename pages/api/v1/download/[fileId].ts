@@ -1,10 +1,26 @@
 import { downloadFile, getFileStream } from "@/storage/cloudflare/r2Cliente";
+import rateLimit from "express-rate-limit";
 import { NextApiRequest, NextApiResponse } from "next";
+import { createRouter } from "next-connect";
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse,
-) {
+//midleware para barrar multiplas requisiçoes
+export const downloadLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // Janela de 15 minutos
+  max: 5, // Cada IP só pode pedir 5 URLs assinadas a cada 15 minutos
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
+    return res.status(429).json({
+      error: "Muitos uploads requisitados. Tente novamente mais tarde.",
+    });
+  },
+});
+
+const router = createRouter<NextApiRequest, NextApiResponse>();
+router.get(downloadLimiter, getHandler);
+export default router.handler();
+
+async function getHandler(req: NextApiRequest, res: NextApiResponse) {
   // ==========================================
   // 1. ACEITA SOMENTE GET
   // ==========================================
@@ -24,7 +40,7 @@ export default async function handler(
 
     const fileUrl = Array.isArray(fileId) ? fileId[0] : fileId;
 
-    return res.status(403).json({ message: "Em manutenção" });
+    // return res.status(403).json({ message: "Em manutenção" });
 
     if (fileUrl) {
       const download = await downloadFile(fileUrl);

@@ -38,6 +38,10 @@ const Home = () => {
       });
 
       const data = await response.json();
+      //manutencao-------------------------------
+      // console.log(data);
+      // return;
+      //manutencao-------------------------------
 
       if (data.success) {
         const r2Response = await fetch(data.url, {
@@ -58,6 +62,7 @@ const Home = () => {
         alert(data.error || "Erro ao fazer upload do arquivo.");
       }
     } catch (err) {
+      console.log(err);
       alert("Erro na conexão com o servidor.");
     } finally {
       setLoading(false);
