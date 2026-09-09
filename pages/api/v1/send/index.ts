@@ -12,6 +12,22 @@ export const uploadLimiter = rateLimit({
   max: 5, // Cada IP só pode pedir 5 URLs assinadas a cada 15 minutos
   standardHeaders: true,
   legacyHeaders: false,
+  //essencial pra funcionar na cloudflare
+  keyGenerator: (req) => {
+    // A Vercel sempre envia o IP real do cliente no topo do x-forwarded-for
+    const forwardedFor = req.headers["x-forwarded-for"];
+    if (forwardedFor) {
+      // Pega o primeiro IP da lista (que é o do usuário real)
+      return forwardedFor.split(",")[0].trim();
+    }
+
+    // Alternativas de segurança para Cloudflare ou Localhost
+    return (
+      req.headers["cf-connecting-ip"] ||
+      req.headers["x-vercel-forwarded-for"] ||
+      req.socket.remoteAddress
+    );
+  },
   handler: (req, res) => {
     return res.status(429).json({
       error: "Muitos uploads requisitados. Tente novamente mais tarde.",
