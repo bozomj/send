@@ -16,9 +16,7 @@ export const r2Client = new S3Client({
   },
 });
 
-export async function uploadFile(filePath: string, key: string, type: string) {
-  const fileStream = fs.createReadStream(filePath);
-
+export async function uploadFile(key: string, type: string) {
   const command = new PutObjectCommand({
     Bucket: process.env.CLOUDFLARE_R2_BUCKET,
     Key: key,

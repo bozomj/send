@@ -7,7 +7,7 @@ const Home = () => {
   // Estados para gerenciar o arquivo, carregamento e o link de retorno
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
-  const [shareLink, setShareLink] = useState("");
+  const [alertContent, setAlert] = useState({ message: "", visible: false });
 
   const router = useRouter();
 
@@ -15,12 +15,14 @@ const Home = () => {
   const handleSubmit = async (e: SubmitEvent) => {
     e.preventDefault();
     if (!selectedFile) {
-      alert("Por favor, selecione um arquivo primeiro.");
+      setAlert({
+        message: "Selecione um arquivo primeiro",
+        visible: true,
+      });
       return;
     }
 
     setLoading(true);
-    setShareLink("");
 
     const formData = new FormData();
     const fileHeaderBlob = selectedFile.slice(0, 500);
@@ -30,6 +32,7 @@ const Home = () => {
 
     formData.append("file", nFile);
     formData.append("fileSize", selectedFile.size.toString());
+    let data: any;
 
     try {
       const response = await fetch("/api/v1/send", {
@@ -37,13 +40,15 @@ const Home = () => {
         body: formData,
       });
 
-      const data = await response.json();
-      //manutencao-------------------------------
-      // console.log(data);
-      // return;
-      //manutencao-------------------------------
+      data = await response.json();
 
-      if (data.success) {
+      if (response.status === 500) {
+        setAlert({ message: data.message, visible: true });
+        setLoading(false);
+        return;
+      }
+
+      if (response.status === 200) {
         const r2Response = await fetch(data.url, {
           method: "PUT", // O R2 exige obrigatoriamente o método PUT
           body: selectedFile, // Aqui enviamos o arquivo original COMPLETO
@@ -52,18 +57,52 @@ const Home = () => {
           },
         });
 
-        setTimeout(() => {
-          router.push(`/file/${data.key}`).catch(() => {
-            // Se ainda assim o Next.js falhar, o navegador força o redirecionamento nativo
-            window.location.href = `/file/${data.key}`;
+        if (r2Response.ok) {
+          const ativar = await fetch(`/api/v1/ativar`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ fileKey: data.key }),
           });
-        }, 300);
+
+          const ativarBody = await ativar.json();
+
+          if (ativar.status === 200) {
+            setTimeout(() => {
+              router.push(`/file/${data.key}`).catch(() => {
+                // Se ainda assim o Next.js falhar, o navegador força o redirecionamento nativo
+                window.location.href = `/file/${data.key}`;
+              });
+            }, 300);
+          }
+          if (ativar.status === 409) {
+            setAlert({
+              message: "Conflito: Este arquivo já foi ativado anteriormente.",
+              visible: true,
+            });
+          }
+        } else {
+          setAlert({
+            message: "Não foi possivel ativar o arquivo",
+            visible: true,
+          });
+        }
       } else {
-        alert(data.error || "Erro ao fazer upload do arquivo.");
+        setAlert({
+          message:
+            "Não foi popssivel enviar o arquivo no momento." + data.error,
+          visible: true,
+        });
       }
     } catch (err) {
-      console.log(err);
-      alert("Erro na conexão com o servidor.");
+      //deletar no banco de dados file and files_metadata
+
+      setAlert({
+        message:
+          "Não foi popssivel enviar o arquivo no momento. Erro com o Servidor!",
+        visible: true,
+      });
     } finally {
       setLoading(false);
     }
@@ -75,6 +114,10 @@ const Home = () => {
         className="flex flex-col gap-2 w-full max-w-sm"
         onSubmit={handleSubmit}
       >
+        <AlertBanner
+          message={alertContent.message}
+          visible={alertContent.visible}
+        />
         <label className="bg-sky-200 flex flex-col items-center p-6 rounded-md gap-2 cursor-pointer hover:bg-sky-300 transition-colors">
           <div className="bg-sky-800 h-8 w-8 rounded-full text-sky-100 flex justify-center items-center p-4">
             <FontAwesomeIcon icon={faPlus} />
@@ -93,12 +136,36 @@ const Home = () => {
 
         <button
           type="submit"
-          disabled={loading || !selectedFile}
+          // disabled={loading || !selectedFile}
           className="bg-sky-800 text-sky-100 px-4 py-2 rounded-md disabled:bg-slate-400 disabled:cursor-not-allowed hover:bg-sky-900 transition-colors"
         >
           {loading ? "Compartilhando..." : "Compartilhar"}
         </button>
       </form>
+    </div>
+  );
+};
+
+interface AlertBannerProps {
+  message: string;
+  visible?: boolean;
+}
+
+const AlertBanner: React.FC<AlertBannerProps> = ({ message, visible }) => {
+  return !visible ? (
+    <></>
+  ) : (
+    <div className="rounded-lg border border-yellow-300 bg-yellow-50 p-4 text-sm text-yellow-900 flex-col flex gap-2">
+      <div className="flex flex-col items-start">
+        <div className="flex items-center gap-2">
+          <span className="text-lg">⚠️</span>
+
+          <p className="font-black">Atenção</p>
+        </div>
+        <div>
+          <p className="mt-1">{message}</p>
+        </div>
+      </div>
     </div>
   );
 };

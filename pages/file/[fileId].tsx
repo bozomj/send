@@ -17,7 +17,6 @@ const File = () => {
 
   const shareWhatsApp = async () => {
     const urli = `https://wa.me/?text=${encodeURIComponent(fileUrl)}`;
-    console.log(urli);
     window.open(urli, "_blank");
   };
 
@@ -42,10 +41,10 @@ const File = () => {
               </div>
               <div>
                 <p className="mt-1">
-                  Confie neste link apenas se você conhece a pessoa que o
+                  Confie neste arquivo apenas se você conhece a pessoa que o
                   enviou.{" "}
                   <span className="text-amber-700 font-black">
-                    Evite abrir links recebidos de desconhecidos.
+                    Evite abrir arquivos recebidos de desconhecidos.
                   </span>
                 </p>
               </div>

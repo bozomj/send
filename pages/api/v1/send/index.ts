@@ -7,6 +7,10 @@ import { createRouter } from "next-connect";
 
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
+import { userAgent } from "next/server";
+import filesMetadata from "@/models/filesMetadata";
+import filesInfo from "@/models/files";
+import database from "@/database/database";
 
 const redis = new Redis({
   url: process.env.REDIS_URL,
@@ -143,7 +147,7 @@ async function postHandler(req: NextApiRequest, res: NextApiResponse) {
     // 🔴 BLOQUEIO ABSOLUTO DA FRAUDE
     if (!isFileValid) {
       if (fs.existsSync(file.filepath)) fs.unlinkSync(file.filepath);
-      console.log("🚨 FRAUDE DETECTADA: Upload cancelado no servidor!");
+
       return res.status(400).json({
         error: `Fraude detectada! O arquivo se diz ${extension} mas sua estrutura interna não corresponde.`,
       });
@@ -153,33 +157,56 @@ async function postHandler(req: NextApiRequest, res: NextApiResponse) {
     const expectedMimeType = ALLOWED_FILES[extension];
     const newName = renomearArquivo(originalFilename);
 
-    //ccorte de manutencao------------------------------
-    // const userAgent = req.headers["user-agent"] || null;
-    // const ipAdress = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+    //remover---apenas um teste----------------
 
-    // return res.status(403).json({
-    //   success: true,
-    //   file: file.filepath,
-    //   name: newName,
-    //   type: expectedMimeType,
-    //   ip_adress: ipAdress,
-    //   user_agent: userAgent,
-    // });
-    //ccorte de manutencao------------------------------
+    const clientdb = await database.getTransationClient();
 
-    const uploadUrl = await uploadFile(
-      file.filepath,
-      newName,
-      expectedMimeType,
-    );
+    try {
+      await clientdb.query("BEGIN");
 
-    if (fs.existsSync(file.filepath)) {
-      fs.unlinkSync(file.filepath);
+      const fileResult = await filesInfo.upload(newName, clientdb);
+
+      const _filesMetadata = {
+        file_id: fileResult.id,
+        ip_address:
+          req.headers["x-test-ip"] ||
+          req.headers["x-forwarded-for"] ||
+          req.socket?.remoteAddress ||
+          "127.0.0.1",
+        user_agent: req.headers["user-agent"] || "Unknown Agent",
+      };
+
+      const metadataResult = await filesMetadata.upload(
+        _filesMetadata,
+        clientdb,
+      );
+
+      await clientdb.query("COMMIT");
+
+      const transactionResult = {
+        fileInfo: fileResult,
+        metadata: metadataResult,
+      };
+
+      const uploadUrl = await uploadFile(newName, expectedMimeType);
+
+      if (fs.existsSync(file.filepath)) {
+        fs.unlinkSync(file.filepath);
+      }
+
+      return res
+        .status(200)
+        .json({ success: true, url: uploadUrl, key: newName });
+    } catch (e) {
+      await clientdb.query("ROLLBACK");
+
+      return res
+        .status(500)
+        .json({ message: "Não foi possivel enviar o arquivo no momento." });
+    } finally {
+      await clientdb.end();
     }
-
-    return res
-      .status(200)
-      .json({ success: true, url: uploadUrl, key: newName });
+    //---------
   } catch (error: any) {
     console.error("Erro detalhado no upload:", error);
     return res.status(500).json({

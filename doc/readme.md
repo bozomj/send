@@ -10,10 +10,10 @@ Substituir o gerenciamento de Rate Limit atual (que roda em memória RAM na Verc
 
 ### 1. Infraestrutura (Painel Upstash)
 
-- [ ] Criar conta no [Upstash](https://upstash.com) (via GitHub).
-- [ ] Criar um novo banco de dados Redis (ex: `rate-limit-prod`).
-- [ ] Selecionar a região mais próxima da Vercel (geralmente `us-east-1`).
-- [ ] Copiar a string de conexão `REDIS_URL` (aba _Details_ > _Node.js_).
+- [x] Criar conta no [Upstash](https://upstash.com) (via GitHub).
+- [x] Criar um novo banco de dados Redis (ex: `rate-limit-prod`).
+- [x] Selecionar a região mais próxima da Vercel (geralmente `us-east-1`).
+- [ x] Copiar a string de conexão `REDIS_URL` (aba _Details_ > _Node.js_).
 
 ### 2. Configuração na Vercel
 
