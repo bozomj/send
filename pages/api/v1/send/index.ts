@@ -7,7 +7,6 @@ import { createRouter } from "next-connect";
 
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
-import { userAgent } from "next/server";
 import filesMetadata from "@/models/filesMetadata";
 import filesInfo from "@/models/files";
 import database from "@/database/database";

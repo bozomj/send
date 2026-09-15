@@ -96,8 +96,6 @@ const Home = () => {
         });
       }
     } catch (err) {
-      //deletar no banco de dados file and files_metadata
-
       setAlert({
         message:
           "Não foi popssivel enviar o arquivo no momento. Erro com o Servidor!",
