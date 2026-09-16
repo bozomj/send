@@ -5,7 +5,6 @@ import {
   S3Client,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import fs from "fs";
 
 export const r2Client = new S3Client({
   region: "auto",
@@ -65,7 +64,7 @@ export async function downloadFile(key: string) {
       ResponseCacheControl: "no-store, no-cache, must-revalidate, max-age=0",
       ResponseContentDisposition: `attachment; filename="${key}"`,
     }),
-    { expiresIn: 3600 },
+    { expiresIn: 3600, signableHeaders: new Set() },
   );
 
   return result;
