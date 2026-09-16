@@ -6,6 +6,12 @@ import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 import filesInfo from "@/models/files";
 
+export const config = {
+  api: {
+    externalResolver: true, // Avisa o Next.js que esta rota pode gerenciar redirecionamentos ou fluxos assíncronos longos
+  },
+};
+
 const redis = new Redis({
   url: process.env.REDIS_URL,
   token: process.env.REDIS_TOKEN,
