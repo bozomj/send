@@ -9,6 +9,12 @@ export function middleware(request: NextRequest, response: NextResponse) {
     return NextResponse.next();
   }
 
+  // 🌟 NOVA EXCEÇÃO: Libera a rota de download do Rate Limit/R2 automaticamente
+  // Assim o navegador consegue acessar o link sem que o middleware barre
+  if (url.pathname.startsWith("/api/v1/download")) {
+    return NextResponse.next();
+  }
+
   // 2. Em produção, valida o token injetado pela Cloudflare
   const cloudflareToken = request.headers.get("X-Cloudflare-Proxy-Token");
   const expectedSecret = process.env.CLOUDFLARE_SECRET_TOKEN;
