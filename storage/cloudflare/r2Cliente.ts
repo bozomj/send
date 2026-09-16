@@ -62,9 +62,10 @@ export async function downloadFile(key: string) {
     new GetObjectCommand({
       Bucket: process.env.CLOUDFLARE_R2_BUCKET!,
       Key: key,
+      ResponseCacheControl: "no-store, no-cache, must-revalidate, max-age=0",
       ResponseContentDisposition: `attachment; filename="${key}"`,
     }),
-    { expiresIn: 60 },
+    { expiresIn: 60 * 5 },
   );
 
   return result;
