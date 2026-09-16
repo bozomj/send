@@ -65,7 +65,7 @@ export async function downloadFile(key: string) {
       ResponseCacheControl: "no-store, no-cache, must-revalidate, max-age=0",
       ResponseContentDisposition: `attachment; filename="${key}"`,
     }),
-    { expiresIn: 60 * 5 },
+    { expiresIn: 3600 },
   );
 
   return result;
