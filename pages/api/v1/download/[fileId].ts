@@ -57,6 +57,7 @@ async function getHandler(req: NextApiRequest, res: NextApiResponse) {
 
     try {
       const download = await downloadFile(fileUrl);
+      console.error("Url de download:::", download);
       return res.redirect(302, download);
     } catch (e) {
       console.error("Erro ao gerar link de download:", e);
