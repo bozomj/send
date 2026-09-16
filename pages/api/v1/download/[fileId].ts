@@ -46,6 +46,8 @@ async function getHandler(req: NextApiRequest, res: NextApiResponse) {
 
   const fileUrl = Array.isArray(fileId) ? fileId[0] : fileId;
 
+  return res.status(200).json({ fileId, fileUrl });
+
   if (fileUrl) {
     const fileExist = await filesInfo.get(fileUrl);
 
