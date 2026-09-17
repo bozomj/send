@@ -1,3 +1,4 @@
+import { GetServerSidePropsContext } from "next";
 import React from "react";
 
 export default function ForbiddenPage() {
@@ -53,4 +54,27 @@ export default function ForbiddenPage() {
       </div>
     </div>
   );
+}
+
+export async function getServerSideProps(context: GetServerSidePropsContext) {
+  const { req } = context;
+  const headers = req.headers;
+  const cloudflareToken = headers["X-Cloudflare-Proxy-Token"];
+
+  // 2. Verifica se está rodando em ambiente local (localhost)
+  const host = headers.host || "";
+  const isLocalhost = host.includes("localhost") || host.includes("127.0.0.1");
+
+  if (cloudflareToken || isLocalhost) {
+    return {
+      redirect: {
+        destination: "/",
+        permanent: false, // Redirecionamento temporário (302)
+      },
+    };
+  }
+
+  return {
+    props: {},
+  };
 }

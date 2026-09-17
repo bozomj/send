@@ -3,11 +3,11 @@ import type { NextRequest } from "next/server";
 
 export function middleware(request: NextRequest, response: NextResponse) {
   const url = request.nextUrl;
-  const res = response;
+
   // 1. Libera o localhost automaticamente para desenvolvimento local
-  // if (url.hostname === "localhost" || url.hostname === "127.0.0.1") {
-  //   return NextResponse.next();
-  // }
+  if (url.hostname === "localhost" || url.hostname === "127.0.0.1") {
+    return NextResponse.next();
+  }
 
   if (url.pathname === "/403") {
     return NextResponse.next();
@@ -22,14 +22,6 @@ export function middleware(request: NextRequest, response: NextResponse) {
     return NextResponse.rewrite(new URL("/403", request.url), {
       status: 403,
     });
-
-    return new NextResponse(
-      "Acesso negado. Acesse através do domínio oficial.",
-      {
-        status: 403,
-        headers: { "Content-Type": "text/plain; charset=utf-8" },
-      },
-    );
   }
 
   return NextResponse.next();
