@@ -9,7 +9,7 @@ export function middleware(request: NextRequest, response: NextResponse) {
     return NextResponse.next();
   }
 
-  if (url.pathname === "/403") {
+  if (url.pathname === "/error-gateway-kfx") {
     return NextResponse.next();
   }
 
@@ -19,7 +19,7 @@ export function middleware(request: NextRequest, response: NextResponse) {
 
   // Se o token estiver errado ou se você esqueceu de cadastrar a variável na Vercel, bloqueia
   if (!expectedSecret || cloudflareToken !== expectedSecret) {
-    return NextResponse.rewrite(new URL("/403", request.url), {
+    return NextResponse.rewrite(new URL("/error-gateway-kfx", request.url), {
       status: 403,
     });
   }

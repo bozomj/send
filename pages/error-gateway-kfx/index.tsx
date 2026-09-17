@@ -1,5 +1,4 @@
 import { GetServerSidePropsContext } from "next";
-import React from "react";
 
 export default function ForbiddenPage() {
   return (
@@ -46,7 +45,7 @@ export default function ForbiddenPage() {
         <div>
           <a
             href={`https://bzmjsend.com.br`}
-            className="inline-flex items-center justify-center px-5 py-2.5 text-sm font-medium text-white bg-lime-700 hover:bg-lime-800 rounded-lg shadowtransition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-slate-950 focus:ring-offset-2"
+            className="inline-flex items-center cursor-pointer justify-center px-5 py-2.5 text-sm font-medium text-white bg-lime-700 hover:bg-lime-800 rounded-lg shadowtransition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-slate-950 focus:ring-offset-2"
           >
             Acessar via Domínio Oficial
           </a>
@@ -65,7 +64,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const host = headers.host || "";
   const isLocalhost = host.includes("localhost") || host.includes("127.0.0.1");
 
-  if (cloudflareToken || isLocalhost) {
+  if (cloudflareToken || false) {
     return {
       redirect: {
         destination: "/",
