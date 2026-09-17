@@ -52,24 +52,22 @@ async function getHandler(req: NextApiRequest, res: NextApiResponse) {
 
   const fileUrl = Array.isArray(fileId) ? fileId[0] : fileId;
 
-  return res.status(200).json({ fileId, fileUrl });
+  if (fileUrl) {
+    const fileExist = await filesInfo.get(fileUrl);
 
-  // if (fileUrl) {
-  //   const fileExist = await filesInfo.get(fileUrl);
+    if (fileExist == null) {
+      return res
+        .status(403)
+        .json({ message: "Arquivo não encontrado na origem ou invalido" });
+    }
 
-  //   if (fileExist == null) {
-  //     return res
-  //       .status(403)
-  //       .json({ message: "Arquivo não encontrado na origem ou invalido" });
-  //   }
-
-  //   try {
-  //     const download = await downloadFile(fileUrl);
-  //     console.error("Url de download:::", download);
-  //     return res.redirect(302, download);
-  //   } catch (e) {
-  //     console.error("Erro ao gerar link de download:", e);
-  //     return res.status(500).json({ message: "Erro ao processar download." });
-  //   }
-  // }
+    try {
+      const download = await downloadFile(fileUrl);
+      console.error("Url de download:::", download);
+      return res.redirect(302, download);
+    } catch (e) {
+      console.error("Erro ao gerar link de download:", e);
+      return res.status(500).json({ message: "Erro ao processar download." });
+    }
+  }
 }

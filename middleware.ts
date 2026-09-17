@@ -3,9 +3,13 @@ import type { NextRequest } from "next/server";
 
 export function middleware(request: NextRequest, response: NextResponse) {
   const url = request.nextUrl;
-
+  const res = response;
   // 1. Libera o localhost automaticamente para desenvolvimento local
-  if (url.hostname === "localhost" || url.hostname === "127.0.0.1") {
+  // if (url.hostname === "localhost" || url.hostname === "127.0.0.1") {
+  //   return NextResponse.next();
+  // }
+
+  if (url.pathname === "/403") {
     return NextResponse.next();
   }
 
@@ -15,6 +19,10 @@ export function middleware(request: NextRequest, response: NextResponse) {
 
   // Se o token estiver errado ou se você esqueceu de cadastrar a variável na Vercel, bloqueia
   if (!expectedSecret || cloudflareToken !== expectedSecret) {
+    return NextResponse.rewrite(new URL("/403", request.url), {
+      status: 403,
+    });
+
     return new NextResponse(
       "Acesso negado. Acesse através do domínio oficial.",
       {
