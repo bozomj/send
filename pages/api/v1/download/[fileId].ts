@@ -5,6 +5,7 @@ import { createRouter } from "next-connect";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 import filesInfo from "@/models/files";
+import limiter from "@/middlewares/limiter";
 
 export const config = {
   api: {
@@ -12,39 +13,8 @@ export const config = {
   },
 };
 
-const redis = new Redis({
-  url: process.env.REDIS_URL,
-  token: process.env.REDIS_TOKEN,
-});
-
-const ratelimit = new Ratelimit({
-  redis,
-  limiter: Ratelimit.slidingWindow(5, "15 m"),
-});
-
-// middleware para barrar múltiplas requisições
-export async function downloadLimiter(req: any, res: any, next: any) {
-  const forwardedFor = req.headers["x-forwarded-for"];
-
-  const ip =
-    req.headers["cf-connecting-ip"] ||
-    (forwardedFor
-      ? forwardedFor.split(",")[0].trim()
-      : req.socket.remoteAddress || "unknown");
-
-  const { success } = await ratelimit.limit(`upload:${ip}`);
-
-  if (!success) {
-    return res.status(429).json({
-      error: "Muitos Downloads requisitados. Tente novamente mais tarde.",
-    });
-  }
-
-  return next();
-}
-
 const router = createRouter<NextApiRequest, NextApiResponse>();
-router.get(downloadLimiter, getHandler);
+router.get(limiter("download"), getHandler);
 export default router.handler();
 
 async function getHandler(req: NextApiRequest, res: NextApiResponse) {

@@ -1,45 +1,13 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { createRouter } from "next-connect";
 
-import { Ratelimit } from "@upstash/ratelimit";
-import { Redis } from "@upstash/redis";
 import { r2Client } from "@/storage/cloudflare/r2Cliente";
 import { HeadObjectCommand } from "@aws-sdk/client-s3";
 import filesInfo from "@/models/files";
-
-const redis = new Redis({
-  url: process.env.REDIS_URL,
-  token: process.env.REDIS_TOKEN,
-});
-
-const ratelimit = new Ratelimit({
-  redis,
-  limiter: Ratelimit.slidingWindow(5, "15 m"),
-});
-
-// middleware para barrar múltiplas requisições
-export async function upLimiter(req: any, res: any, next: any) {
-  const forwardedFor = req.headers["x-forwarded-for"];
-
-  const ip =
-    req.headers["cf-connecting-ip"] ||
-    (forwardedFor
-      ? forwardedFor.split(",")[0].trim()
-      : req.socket.remoteAddress || "unknown");
-
-  const { success } = await ratelimit.limit(`upload:${ip}`);
-
-  if (!success) {
-    return res.status(429).json({
-      error: "Muitos Downloads requisitados. Tente novamente mais tarde.",
-    });
-  }
-
-  return next();
-}
+import limiter from "@/middlewares/limiter";
 
 const router = createRouter<NextApiRequest, NextApiResponse>();
-router.post(upLimiter, postHandler);
+router.post(limiter("uploadActive"), postHandler);
 export default router.handler();
 
 async function postHandler(req: NextApiRequest, res: NextApiResponse) {

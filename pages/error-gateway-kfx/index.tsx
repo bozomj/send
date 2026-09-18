@@ -64,7 +64,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const host = headers.host || "";
   const isLocalhost = host.includes("localhost") || host.includes("127.0.0.1");
 
-  if (cloudflareToken || false) {
+  if (cloudflareToken || isLocalhost) {
     return {
       redirect: {
         destination: "/",

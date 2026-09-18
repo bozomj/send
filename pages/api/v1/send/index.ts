@@ -5,45 +5,13 @@ import { NextApiRequest, NextApiResponse } from "next";
 import { uploadFile } from "@/storage/cloudflare/r2Cliente";
 import { createRouter } from "next-connect";
 
-import { Ratelimit } from "@upstash/ratelimit";
-import { Redis } from "@upstash/redis";
 import filesMetadata from "@/models/filesMetadata";
 import filesInfo from "@/models/files";
 import database from "@/database/database";
-
-const redis = new Redis({
-  url: process.env.REDIS_URL,
-  token: process.env.REDIS_TOKEN,
-});
-
-const ratelimit = new Ratelimit({
-  redis,
-  limiter: Ratelimit.slidingWindow(5, "15 m"),
-});
-
-// middleware para barrar múltiplas requisições
-export async function uploadLimiter(req: any, res: any, next: any) {
-  const forwardedFor = req.headers["x-forwarded-for"];
-
-  const ip =
-    req.headers["cf-connecting-ip"] ||
-    (forwardedFor
-      ? forwardedFor.split(",")[0].trim()
-      : req.socket.remoteAddress || "unknown");
-
-  const { success } = await ratelimit.limit(`upload:${ip}`);
-
-  if (!success) {
-    return res.status(429).json({
-      error: "Muitos uploads requisitados. Tente novamente mais tarde.",
-    });
-  }
-
-  return next();
-}
+import limiter from "@/middlewares/limiter";
 
 const router = createRouter<NextApiRequest, NextApiResponse>();
-router.post(uploadLimiter, postHandler);
+router.post(limiter("upload"), postHandler);
 
 export default router.handler();
 

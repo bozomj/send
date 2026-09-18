@@ -27,7 +27,7 @@ const limiter = (key: string) => {
 
     if (!success) {
       return res.status(429).json({
-        message: "Muitos Downloads requisitados. Tente novamente mais tarde.",
+        message: "Muitos operações requisitadas. Tente novamente mais tarde.",
       });
     }
 

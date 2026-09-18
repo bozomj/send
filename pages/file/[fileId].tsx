@@ -1,6 +1,8 @@
+import Header from "@/components/Header";
 import { downloadFile } from "@/storage/cloudflare/r2Cliente";
 import { useParams } from "next/navigation";
 import { QRCodeSVG } from "qrcode.react";
+import { useState } from "react";
 
 interface FileProps {
   fileId: string;
@@ -14,6 +16,7 @@ const File = () => {
   const fileUrl = `${process.env.NEXT_PUBLIC_SERVER}/file/${file_id}`;
   const name = file_id.replace(".", "--.--");
   const filename = name.split("--.--")[1];
+  const [errorMessage, setErrorMessage] = useState("");
 
   const shareWhatsApp = async () => {
     const urli = `https://wa.me/?text=${encodeURIComponent(fileUrl)}`;
@@ -25,57 +28,77 @@ const File = () => {
   };
 
   return (
-    <main className="flex w-full h-full items-center justify-center ">
-      <div className="w-md flex flex-col gap-4 items-center p-2 ">
-        <QRCodeSVG value={fileUrl} className="w-1/2 h-1/2" />
+    <>
+      <Header />
+      <main className="flex w-full h-full items-center justify-center ">
+        <div className="w-md flex flex-col gap-4 items-center p-2 ">
+          <QRCodeSVG value={fileUrl} className="w-1/2 h-1/2" />
 
-        <p className="text-center">Escaneie o QR Code para compartilhar.</p>
+          <p className="text-center">Escaneie o QR Code para compartilhar.</p>
+          <span>{errorMessage}</span>
+          <div>
+            <div className="rounded-lg border border-yellow-300 bg-yellow-50 p-4 text-sm text-yellow-900 flex-col flex gap-2">
+              <div className="flex flex-col items-start">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">⚠️</span>
 
-        <div>
-          <div className="rounded-lg border border-yellow-300 bg-yellow-50 p-4 text-sm text-yellow-900 flex-col flex gap-2">
-            <div className="flex flex-col items-start">
-              <div className="flex items-center gap-2">
-                <span className="text-lg">⚠️</span>
-
-                <p className="font-black">Atenção</p>
+                  <p className="font-black">Atenção</p>
+                </div>
+                <div>
+                  <p className="mt-1">
+                    Confie neste arquivo apenas se você conhece a pessoa que o
+                    enviou.{" "}
+                    <span className="text-amber-700 font-black">
+                      Evite abrir arquivos recebidos de desconhecidos.
+                    </span>
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="mt-1">
-                  Confie neste arquivo apenas se você conhece a pessoa que o
-                  enviou.{" "}
-                  <span className="text-amber-700 font-black">
-                    Evite abrir arquivos recebidos de desconhecidos.
-                  </span>
-                </p>
-              </div>
+              <a
+                href={url}
+                className="rounded text-center bg-sky-800 font-bold px-5 w-full py-2 text-white flex flex-col"
+              >
+                <span>{filename}</span>
+                <span className="text-amber-400">Baixar arquivo</span>
+              </a>
+              <button
+                className="rounded text-center bg-sky-800 font-bold px-5 w-full py-2 text-white flex flex-col"
+                onClick={async () => {
+                  const result = await fetch(`/api/v1/download/${file_id}`);
+                  if (result.status !== 200) {
+                    const resultBody = await result.json();
+                    setErrorMessage(resultBody.message);
+                  }
+                  if (result.status === 200) {
+                    console.log(result.url);
+                    window.location.href = result.url;
+                  }
+                }}
+              >
+                <span>{filename}</span>
+                <span className="text-amber-400">Baixar arquivo</span>
+              </button>
             </div>
-            <a
-              href={url}
-              className="rounded text-center bg-sky-800 font-bold px-5 w-full py-2 text-white flex flex-col"
+          </div>
+
+          <div className="flex w-full  gap-3 px-4">
+            <button
+              onClick={shareWhatsApp}
+              className="rounded bg-green-500 flex-1 px-4 py-2 text-white"
             >
-              <span>{filename}</span>
-              <span className="text-amber-400">Baixar arquivo</span>
-            </a>
+              Compartilhar No WhatsApp
+            </button>
+
+            <button
+              onClick={copyUrl}
+              className="rounded bg-gray-400 px-2 py-2 text-white"
+            >
+              Copiar URL
+            </button>
           </div>
         </div>
-
-        <div className="flex w-full  gap-3 px-4">
-          <button
-            onClick={shareWhatsApp}
-            className="rounded bg-green-500 flex-1 px-4 py-2 text-white"
-          >
-            Compartilhar No WhatsApp
-          </button>
-
-          <button
-            onClick={copyUrl}
-            className="rounded bg-gray-400 px-2 py-2 text-white"
-          >
-            Copiar URL
-          </button>
-        </div>
-      </div>
-    </main>
+      </main>
+    </>
   );
 };
 
