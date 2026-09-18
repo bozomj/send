@@ -1,12 +1,7 @@
 import Header from "@/components/Header";
-import { downloadFile } from "@/storage/cloudflare/r2Cliente";
 import { useParams } from "next/navigation";
 import { QRCodeSVG } from "qrcode.react";
 import { useState } from "react";
-
-interface FileProps {
-  fileId: string;
-}
 
 const File = () => {
   const params = useParams();
@@ -18,15 +13,6 @@ const File = () => {
   const filename = name.split("--.--")[1];
   const [errorMessage, setErrorMessage] = useState("");
 
-  const shareWhatsApp = async () => {
-    const urli = `https://wa.me/?text=${encodeURIComponent(fileUrl)}`;
-    window.open(urli, "_blank");
-  };
-
-  const copyUrl = async () => {
-    await navigator.clipboard.writeText(fileUrl);
-  };
-
   return (
     <>
       <Header />
@@ -35,9 +21,19 @@ const File = () => {
           <QRCodeSVG value={fileUrl} className="w-1/2 h-1/2" />
 
           <p className="text-center">Escaneie o QR Code para compartilhar.</p>
-          <span>{errorMessage}</span>
+
+          <span
+            className={
+              errorMessage !== ""
+                ? `rounded-md bg-amber-100 p-2 w-full text-center text-amber-700 font-bold border border-amber-300`
+                : ""
+            }
+          >
+            {errorMessage}
+          </span>
+
           <div>
-            <div className="rounded-lg border border-yellow-300 bg-yellow-50 p-4 text-sm text-yellow-900 flex-col flex gap-2">
+            <div className="rounded-lg border border-yellow-300 bg-yellow-50 p-4 text-sm text-yellow-900 flex-col flex gap-2 ">
               <div className="flex flex-col items-start">
                 <div className="flex items-center gap-2">
                   <span className="text-lg">⚠️</span>
@@ -54,26 +50,10 @@ const File = () => {
                   </p>
                 </div>
               </div>
-              <a
-                href={url}
-                className="rounded text-center bg-sky-800 font-bold px-5 w-full py-2 text-white flex flex-col"
-              >
-                <span>{filename}</span>
-                <span className="text-amber-400">Baixar arquivo</span>
-              </a>
+
               <button
-                className="rounded text-center bg-sky-800 font-bold px-5 w-full py-2 text-white flex flex-col"
-                onClick={async () => {
-                  const result = await fetch(`/api/v1/download/${file_id}`);
-                  if (result.status !== 200) {
-                    const resultBody = await result.json();
-                    setErrorMessage(resultBody.message);
-                  }
-                  if (result.status === 200) {
-                    console.log(result.url);
-                    window.location.href = result.url;
-                  }
-                }}
+                className="rounded cursor-pointer text-center bg-sky-800 font-bold px-5 w-full py-2 text-white flex flex-col hover:bg-sky-700 transition-all duration-300"
+                onClick={download}
               >
                 <span>{filename}</span>
                 <span className="text-amber-400">Baixar arquivo</span>
@@ -84,14 +64,14 @@ const File = () => {
           <div className="flex w-full  gap-3 px-4">
             <button
               onClick={shareWhatsApp}
-              className="rounded bg-green-500 flex-1 px-4 py-2 text-white"
+              className="rounded cursor-pointer bg-green-700 flex-1 px-4 py-2 text-white hover:bg-green-600 transition-all duration-300"
             >
               Compartilhar No WhatsApp
             </button>
 
             <button
               onClick={copyUrl}
-              className="rounded bg-gray-400 px-2 py-2 text-white"
+              className="rounded cursor-pointer bg-gray-400 px-2 py-2 text-white hover:bg-gray-500 transition-all duration-300"
             >
               Copiar URL
             </button>
@@ -100,6 +80,27 @@ const File = () => {
       </main>
     </>
   );
+
+  async function download() {
+    const result = await fetch(url);
+    if (result.status !== 200) {
+      const resultBody = await result.json();
+      setErrorMessage(resultBody.message);
+    }
+    if (result.status === 200) {
+      console.log(result.url);
+      window.location.href = result.url;
+    }
+  }
+
+  async function shareWhatsApp() {
+    const urli = `https://wa.me/?text=${encodeURIComponent(fileUrl)}`;
+    window.open(urli, "_blank");
+  }
+
+  async function copyUrl() {
+    await navigator.clipboard.writeText(fileUrl);
+  }
 };
 
 export default File;
