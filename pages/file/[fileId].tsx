@@ -1,24 +1,28 @@
 import Header from "@/components/Header";
 import { useParams } from "next/navigation";
 import { QRCodeSVG } from "qrcode.react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const File = () => {
   const params = useParams();
   const file_id = (params?.fileId as string) ?? "";
+  const [currentUrl, setCurrentUrl] = useState("");
 
-  const url = `/api/v1/download/${file_id}`;
-  const fileUrl = `/file/${file_id}`;
+  const urlDownload = `/api/v1/download/${file_id}`;
   const name = file_id.replace(".", "--.--");
   const filename = name.split("--.--")[1];
   const [errorMessage, setErrorMessage] = useState("");
+
+  useEffect(() => {
+    setCurrentUrl(window.location.href);
+  });
 
   return (
     <>
       <Header />
       <main className="flex w-full h-full items-center justify-center ">
         <div className="w-md flex flex-col gap-4 items-center p-2 ">
-          <QRCodeSVG value={fileUrl} className="w-1/2 h-1/2" />
+          <QRCodeSVG value={currentUrl} className="w-1/2 h-1/2" />
 
           <p className="text-center">Escaneie o QR Code para compartilhar.</p>
 
@@ -82,7 +86,7 @@ const File = () => {
   );
 
   async function download() {
-    const result = await fetch(url);
+    const result = await fetch(urlDownload);
     if (result.status !== 200) {
       const resultBody = await result.json();
       setErrorMessage(resultBody.message);
@@ -94,12 +98,12 @@ const File = () => {
   }
 
   async function shareWhatsApp() {
-    const urli = `https://wa.me/?text=${encodeURIComponent(fileUrl)}`;
+    const urli = `https://wa.me/?text=${encodeURIComponent(currentUrl)}`;
     window.open(urli, "_blank");
   }
 
   async function copyUrl() {
-    await navigator.clipboard.writeText(fileUrl);
+    await navigator.clipboard.writeText(currentUrl);
   }
 };
 
